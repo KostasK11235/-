@@ -2,12 +2,8 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, KFold
-from tensorflow import keras
-from keras.models import Sequential
-from keras.layers import Dense
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
-from keras.callbacks import EarlyStopping
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from bitstring import BitArray
 
 def create_population(num_chromosomes):
     population = []
@@ -28,29 +24,45 @@ def create_population(num_chromosomes):
 
     return population
 
-population = create_population(5)
+def check_outliers(population_list):
+    for chromosome in population_list:
+        chromosome_list = list(chromosome)
 
-print(population[0])
-print(population[1])
+        for k in range(0, len(chromosome_list), 14):
+            gene = "".join(chromosome_list[k:k+14])
+            # print(gene, "->", int(gene, 2), "->", int(gene, 2)>10000)
+            if int(gene, 2) > 10000:
+                new_gene = random.uniform(0, 1)
+                new_gene = round(new_gene, 4)
+                bin_gene = format(int(new_gene * (10 ** 4)), '014b')
+                chromosome_list[k:k+14] = list(bin_gene)
+                print(list(bin_gene))
+                print(chromosome_list)
 
-# reading/standardizing and normalizing the data
-data = pd.read_csv("new_data_1.csv")
+        population_list = "".join(chromosome_list)
+        print(population_list)
+    return population_list
 
-data = data.drop(['gender', 'age', 'height', 'weight', 'body_mass_index'], axis=1)
-print(data.shape)
 
-used = data.iloc[:, 1:-1].values
-y = data.iloc[:, 13:14].values
+def main():
+    # reading/standardizing and normalizing the data
+    data = pd.read_csv("new_data_1.csv")
 
-stand_data = StandardScaler().fit_transform(X=used)
-norm_data = MinMaxScaler(copy=False).fit_transform(X=stand_data)
-# print(norm_data)
+    data = data.drop(['gender', 'age', 'height', 'weight', 'body_mass_index'], axis=1)
+    print(data.shape)
 
-# grouped_data = np.split(stand_data, np.where(stand_data[:, 18][1:] != stand_data[:, 18][:-1])[0]+1)
-# print(grouped_data)
-# new = stand_data.groupby('class,,')
-# print(new)
-# mean_values = data.groupby('class,,')[['x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'x3', 'y3', 'z3', 'x4', 'y4', 'z4']].mean()
-# print(mean_values)
+    used = data.iloc[:, 1:-1].values
+    y = data.iloc[:, 13:14].values
+
+    stand_data = StandardScaler().fit_transform(X=used)
+    norm_data = MinMaxScaler(copy=False).fit_transform(X=stand_data)
+    # print(norm_data)
+
+    # grouped_data = np.split(stand_data, np.where(stand_data[:, 18][1:] != stand_data[:, 18][:-1])[0]+1)
+    # print(grouped_data)
+    # new = stand_data.groupby('class,,')
+    # print(new)
+    # mean_values = data.groupby('class,,')[['x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'x3', 'y3', 'z3', 'x4', 'y4', 'z4']].mean()
+    # print(mean_values)
 
 
