@@ -36,15 +36,18 @@ def check_outliers(population_list):
                 new_gene = round(new_gene, 4)
                 bin_gene = format(int(new_gene * (10 ** 4)), '014b')
                 chromosome_list[k:k+14] = list(bin_gene)
-                print(list(bin_gene))
-                print(chromosome_list)
+                # print(list(bin_gene))
+                # print(chromosome_list)
 
-        population_list = "".join(chromosome_list)
-        print(population_list)
+        chromosome_index = population_list.index(chromosome)
+        temp = "".join(chromosome_list)
+        population_list[chromosome_index] = temp
+        # print(population_list)
     return population_list
 
 
-def cost_function(chromosome, bin_group_means):
+def score_function(chromosome, bin_group_means):
+    # cosine similarity sum for all other 4 classes between them and the given chromosome
     cos_sum = 0
     array1 = np.array(list(chromosome), dtype=int)
     norm1 = np.linalg.norm(array1)
@@ -67,13 +70,13 @@ def tournament_selection(population, bin_group_means):
 
     for i in range(len(population)):
         # select the chromosomes for the group
-        best_score = 0
-        best_chromosome = 0
-        selected_chromosomes = random.sample(range(len(population)), group_size)
+        best_score = -1
+        best_chromosome = -1
+        chosen_chromosome = random.sample(range(len(population)), group_size)
 
         # find the best chromosome from the selected and pass it to next generation
-        for k in selected_chromosomes:
-            chromosome_score = cost_function(population[k], bin_group_means)
+        for k in chosen_chromosome:
+            chromosome_score = score_function(population[k], bin_group_means)
             if chromosome_score > best_score:
                 best_score = chromosome_score
                 best_chromosome = k
@@ -82,17 +85,19 @@ def tournament_selection(population, bin_group_means):
 
     return next_gen
 
-def uniform_crossover(population, crossover_probability, bin_group_means):
+def uniform_crossover(population, crossover_probability):
     new_population = []
-
     crossover_list = []
-    cross_possibility = [round(random.uniform(0, 1), 1) for i in range(4)]
-    for i in cross_possibility:
-        if i < 0.6:
-            crossover_list.append(population[cross_possibility.index(i)])
-        else:
-            new_population.append(population[cross_possibility.index(i)])
 
+    # generate crossover chances for each chromosome and move it to next gen or crossover it accordingly
+    crossover_chances = [round(random.uniform(0, 1), 3) for i in range(4)]
+    for i in crossover_chances:
+        if i < crossover_probability:
+            crossover_list.append(population[crossover_chances.index(i)])
+        else:
+            new_population.append(population[crossover_chances.index(i)])
+
+    # αν έχουμε μονό αριθμό επιλεγμένων χρωμοσωμάτων?
     # uniformly crossover the selected chromosomes
     for k in range(0, len(crossover_list), 2):
         parent1 = crossover_list[k]
@@ -113,6 +118,40 @@ def uniform_crossover(population, crossover_probability, bin_group_means):
         new_population.append(child2)
 
     return new_population
+
+
+def chromosome_mutation(population, mutation_probability, bin_group_mean):
+    mutated_generation = []
+    chromosome_scores = []
+
+    # get the scores for all chromosomes
+    for chromosome in population:
+        chromosome_scores.append(score_function(chromosome, bin_group_mean))
+
+    # get the index of the elite chromosomes
+    max_score = max(chromosome_scores)
+    max_indexes = [index for index, value in enumerate(chromosome_scores) if value == max_score]
+
+    # get the elite chromosomes directly to the next generation and
+    # remove them from the to be mutated population
+    for i in max_indexes:
+        mutated_generation.append(population[i])
+        del population[i]
+
+    # mutate the remaining population
+    for person in population:
+        person_list = list(person)
+        for bit in range(len(person)):
+            bit_mutation_chance = round(random.uniform(0, 1), 3)
+            if bit_mutation_chance < mutation_probability:
+                person_list[bit] = '0' if person_list[bit] == '1' else '1'
+
+        person_index = population.index(person)
+        temp = "".join(person_list)
+        population[person_index] = temp
+
+    return mutated_generation
+
 
 def main():
     # reading/standardizing and normalizing the data
@@ -149,14 +188,27 @@ def main():
             bin_form = format(int(mean[i] * (10 ** 4)), '014b')
             bin_mean += bin_form
         binary_means.append(bin_mean)
-        print(mean)
+        # print(mean)
 
     # print the binary form of every mean
-    for item in binary_means:
-        print(item)
+    # for item in binary_means:
+    #    print(item)
 
     pop = create_population(5)
 
+    for person in pop:
+        print(person)
+
+    pop[0] = pop[0][0:14] + format(int(16000), '014b') + pop[0][28:]
+
+    print("altered: ")
+    for person in pop:
+        print(person)
+
+    new_population = check_outliers(pop)
+    print("new")
+    for k in new_population:
+        print(k)
     # grouped_data = np.split(stand_data, np.where(stand_data[:, 13][1:] != stand_data[:, 13][:-1])[0]+1)
     # print(grouped_data)
     # new = stand_data.groupby('class,,')
