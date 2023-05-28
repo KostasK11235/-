@@ -72,10 +72,10 @@ def tournament_selection(population, bin_group_means):
         # select the chromosomes for the group
         best_score = -1
         best_chromosome = -1
-        chosen_chromosome = random.sample(range(len(population)), group_size)
+        chosen_chromosomes = random.sample(range(len(population)), group_size)
 
         # find the best chromosome from the selected and pass it to next generation
-        for k in chosen_chromosome:
+        for k in chosen_chromosomes:
             chromosome_score = score_function(population[k], bin_group_means)
             if chromosome_score > best_score:
                 best_score = chromosome_score
@@ -84,10 +84,8 @@ def tournament_selection(population, bin_group_means):
         next_gen.append(population[best_chromosome])
 
     # checkpoint code
-    print("Tournament population: ")
-    for person in next_gen:
-        print(person)
-
+    print("Tournament population: ", len(next_gen))
+    print("************************************")
     return next_gen
 
 def uniform_crossover(population, crossover_probability):
@@ -96,7 +94,7 @@ def uniform_crossover(population, crossover_probability):
 
     # generate crossover chances for each chromosome and move it to next gen or crossover it accordingly
     crossover_chances = [round(random.uniform(0, 1), 3) for i in range(len(population))]
-    print("chances:", crossover_chances)
+    print("Crossover chances:", crossover_chances)
     for i in crossover_chances:
         if i < crossover_probability:
             crossover_list.append(population[crossover_chances.index(i)])
@@ -104,18 +102,14 @@ def uniform_crossover(population, crossover_probability):
             new_population.append(population[crossover_chances.index(i)])
 
     # checkpoint code
-    print("cross list len", len(crossover_list))
-    print("cross 1: ")
-    for person in new_population:
-        print(person)
+    print("Crossover_list length: ", len(crossover_list))
+    print("New_population list length: ", len(new_population))
 
     if len(crossover_list) % 2 == 1:
         new_population.append(crossover_list[len(crossover_list)-1])
         del crossover_list[len(crossover_list)-1]
-
-    print("Cross 2: ")
-    for person in new_population:
-        print(person)
+        print("Crossover_list was odd so we added last person to new_population...\nNew_population length: ",
+              len(new_population))
 
     # uniformly crossover the selected chromosomes
     for k in range(0, len(crossover_list), 2):
@@ -137,9 +131,7 @@ def uniform_crossover(population, crossover_probability):
         new_population.append(child2)
 
     # checkpoint code
-    print("Crossed population: ")
-    for person in new_population:
-        print(person)
+    print("Crossover done, new_population length: ", len(new_population))
 
     print("************************************")
     return new_population
@@ -164,8 +156,8 @@ def chromosome_mutation(population, mutation_probability, bin_group_mean):
     for i in max_indexes:
         mutated_generation.append(cloned_population[i])
 
-    # error here idk...
-    for k in max_indexes:
+    # remove from the population to be cloned the elite chromosomes
+    for k in reversed(max_indexes):
         del cloned_population[k]
 
     # mutate the remaining population
@@ -181,10 +173,7 @@ def chromosome_mutation(population, mutation_probability, bin_group_mean):
         mutated_generation.append(temp)
 
     # checkpoint code
-    print("Mutated population: ")
-    for person in mutated_generation:
-        print(person)
-
+    print("Mutated population length: ", len(mutated_generation))
     print("************************************")
     return mutated_generation
 
@@ -237,23 +226,30 @@ def main():
         binary_means.append(bin_mean)
         # print(mean)
 
-    print("Values of sitting class: ", mean_values[4])
+    print("Values of sitting class: ", mean_values[4]*10000)
 
     # create initial population
     crossover_chance = 0.6
-    mutation_chance = 00.1
+    mutation_chance = 0.01
     max_generation = 1000
-    generation = 0
-    population = create_population(8)
+    population = create_population(20)
 
     # print initial population
-    for person in population:
-        print(person)
+    # for person in population:
+    #   print(person)
 
-    for i in range(0, 1):
+    best_scores = []
+
+    for i in range(0, 3):
+        print("Run number: ", i)
         cloned_population = population
-        while generation < 20:
+        best_scores = []
+        generation = 0
+        while 1:
             generation += 1
+            if generation > 1000:
+                break
+            print("Generation #", generation)
             tournament_population = tournament_selection(cloned_population, binary_means)
             crossed_population = uniform_crossover(tournament_population, crossover_chance)
             crossed_population = check_outliers(crossed_population)
@@ -264,17 +260,35 @@ def main():
             scores = []
             for person in cloned_population:
                 scores.append(score_function(person, binary_means))
-                print(person)
+                # print(person)
 
             max_index = [index for index, value in enumerate(scores) if value == max(scores)]
-            print("Best chromosome values: ")
 
             max_chromosome = []
             for j in max_index:
                 max_chromosome.append(get_int_values(cloned_population[j]))
 
-            print(max_chromosome)
-            print("*****************************************")
+            best_scores.append(score_function(cloned_population[max_index[0]], binary_means))
+            print(best_scores)
+            print("Best chromosome values: ", max_chromosome)
+            print("Next_generation length: ", len(cloned_population))
+            print("************************************")
+
+            if generation > 30:
+                # average = sum(best_scores[generation-6:generation-1])/len(best_scores[generation-6:generation-1])
+                # print(average)
+                improvement = (best_scores[generation-1] - best_scores[generation-2])/best_scores[generation-2]
+                no_evolution = (sum(best_scores[generation-10:generation])/best_scores[generation-1])
+                print("Improvement: ", improvement, "no_evolution: ", no_evolution)
+                if improvement < 0.01 or (no_evolution == 1):
+                    break
+
+        number_of_generations = range(len(best_scores))
+        plt.plot(number_of_generations, best_scores)
+        plt.xlabel('Generation')
+        plt.ylabel('Best scores')
+        plt.title('Evolution of best score')
+        plt.show()
 
 
 main()
