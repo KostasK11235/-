@@ -229,9 +229,9 @@ def main():
     print("Values of sitting class: ", mean_values[4]*10000)
 
     # create initial population
-    crossover_chance = 0.9
+    crossover_chance = 0.1
     mutation_chance = 0.01
-    population = create_population(20)
+    population = create_population(200)
 
     best_scores = []
     mean_best_scores = []
@@ -282,7 +282,7 @@ def main():
                 no_evolution = (np.mean(best_scores[generation-10:generation])/best_scores[generation-1])
                 print("Improvement: ", improvement, "no_evolution: ", no_evolution)
                 if improvement < 0.01 or (round(no_evolution, 4) == 1):
-                    mean_best_scores.append(np.mean(best_scores))
+                    mean_best_scores.append(best_scores[generation-1])
                     generations_number.append(generation)
                     break
 
