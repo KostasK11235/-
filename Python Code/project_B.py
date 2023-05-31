@@ -13,10 +13,8 @@ def create_population(num_chromosomes):
             # generate a random number between [0,1]
             number = random.uniform(0, 1)
             number = round(number, 4)
-            # print(number)
             # encode the number using binary encoding using 14 bits
             binary = format(int(number * (10 ** 4)), '014b')
-            # print(binary)
             # concatenate the binary number to the chromosome
             chromosome += binary
         population.append(chromosome)
@@ -30,19 +28,17 @@ def check_outliers(population_list):
 
         for k in range(0, len(chromosome_list), 14):
             gene = "".join(chromosome_list[k:k+14])
-            # print(gene, "->", int(gene, 2), "->", int(gene, 2)>10000)
+
             if int(gene, 2) > 10000:
                 new_gene = random.uniform(0, 1)
                 new_gene = round(new_gene, 4)
                 bin_gene = format(int(new_gene * (10 ** 4)), '014b')
                 chromosome_list[k:k+14] = list(bin_gene)
-                # print(list(bin_gene))
-                # print(chromosome_list)
 
         chromosome_index = population_list.index(chromosome)
         temp = "".join(chromosome_list)
         population_list[chromosome_index] = temp
-        # print(population_list)
+
     return population_list
 
 
@@ -83,9 +79,6 @@ def tournament_selection(population, bin_group_means):
 
         next_gen.append(population[best_chromosome])
 
-    # checkpoint code
-    # print("Tournament population: ", len(next_gen))
-    # print("************************************")
     return next_gen
 
 def uniform_crossover(population, crossover_probability):
@@ -94,22 +87,16 @@ def uniform_crossover(population, crossover_probability):
 
     # generate crossover chances for each chromosome and move it to next gen or crossover it accordingly
     crossover_chances = [round(random.uniform(0, 1), 3) for i in range(len(population))]
-    # print("Crossover chances:", crossover_chances)
     for i in crossover_chances:
         if i < crossover_probability:
             crossover_list.append(population[crossover_chances.index(i)])
         else:
             new_population.append(population[crossover_chances.index(i)])
 
-    # checkpoint code
-    # print("Crossover_list length: ", len(crossover_list))
-    # print("New_population list length: ", len(new_population))
-
+    # if crossover population contains odd number of chromosomes, move the last one to new_population
     if len(crossover_list) % 2 == 1:
         new_population.append(crossover_list[len(crossover_list)-1])
         del crossover_list[len(crossover_list)-1]
-        # print("Crossover_list was odd so we added last person to new_population...\nNew_population length: ",
-              # len(new_population))
 
     # uniformly crossover the selected chromosomes
     for k in range(0, len(crossover_list), 2):
@@ -130,10 +117,6 @@ def uniform_crossover(population, crossover_probability):
         new_population.append(child1)
         new_population.append(child2)
 
-    # checkpoint code
-    # print("Crossover done, new_population length: ", len(new_population))
-
-    # print("************************************")
     return new_population
 
 
@@ -168,13 +151,9 @@ def chromosome_mutation(population, mutation_probability, bin_group_mean):
             if bit_mutation_chance < mutation_probability:
                 person_list[bit] = '0' if person_list[bit] == '1' else '1'
 
-        person_index = cloned_population.index(person)
         temp = "".join(person_list)
         mutated_generation.append(temp)
 
-    # checkpoint code
-    # print("Mutated population length: ", len(mutated_generation))
-    # print("************************************")
     return mutated_generation
 
 def get_int_values(chromosome):
@@ -194,12 +173,10 @@ def main():
     data = pd.read_csv("new_data_1.csv")
 
     data = data.drop(['gender', 'age', 'height', 'weight', 'body_mass_index'], axis=1)
-    # print(data.shape)
 
     positions = data.iloc[:, 1:].values
     stand_data = StandardScaler().fit_transform(X=positions)
     norm_data = MinMaxScaler(copy=False).fit_transform(X=positions)
-    # print(stand_data.shape)
 
     # get unique values and group indices
     unique_values, group_indices = np.unique(norm_data[:, 12], return_inverse=True)
@@ -260,7 +237,6 @@ def main():
             scores = []
             for person in cloned_population:
                 scores.append(score_function(person, binary_means))
-                # print(person)
 
             max_index = [index for index, value in enumerate(scores) if value == max(scores)]
 
@@ -275,8 +251,6 @@ def main():
             print("************************************")
 
             if generation > 50:
-                # average = sum(best_scores[generation-6:generation-1])/len(best_scores[generation-6:generation-1])
-                # print(average)
                 improvement = (best_scores[generation-1] - best_scores[generation-2])/best_scores[generation-2]
                 print("dude", np.mean(best_scores[generation-10:generation]), "last: ", best_scores[generation-1])
                 no_evolution = (np.mean(best_scores[generation-10:generation])/best_scores[generation-1])
@@ -293,9 +267,8 @@ def main():
         plt.title('Evolution of best score')
         plt.show()
 
-    print("Mean_best_scores length: ", len(mean_best_scores))
     print("Mean_best_scores: ", mean_best_scores)
-    print("Mean value of best chromosome: ", round(np.mean(mean_best_scores), 4))
+    print("Mean score of best chromosome: ", round(np.mean(mean_best_scores), 4))
     print("Mean number of generations: ", round(np.mean(generations_number), 4))
 
 
