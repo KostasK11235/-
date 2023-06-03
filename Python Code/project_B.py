@@ -176,7 +176,7 @@ def main():
 
     positions = data.iloc[:, 1:].values
     stand_data = StandardScaler().fit_transform(X=positions)
-    norm_data = MinMaxScaler(copy=False).fit_transform(X=positions)
+    norm_data = MinMaxScaler(copy=False).fit_transform(X=stand_data)
 
     # get unique values and group indices
     unique_values, group_indices = np.unique(norm_data[:, 12], return_inverse=True)
